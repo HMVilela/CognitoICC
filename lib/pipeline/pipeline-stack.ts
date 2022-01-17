@@ -28,5 +28,7 @@ export class PipelineStack extends cdk.Stack {
         }),
       }
     )
+
+    // Add the stage here
   }
 }
