@@ -3,7 +3,7 @@ const AWSXRay = require('aws-xray-sdk-core')
 
 const xRay = AWSXRay.captureAWS(require('aws-sdk'))
 
-AWS.config.update({ region: awsRegion })
+AWS.config.update({ region: 'us-east-1' })
 
 exports.handler = async function (event, context) {
   const apiRequestId = event.requestContext.requestId
