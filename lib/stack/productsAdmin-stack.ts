@@ -21,7 +21,7 @@ export class ProductsAdminStack extends cdk.Stack {
           sourceMap: false,
         },
         tracing: lambda.Tracing.ACTIVE,
-        memorySize: 129,
+        memorySize: 128,
         timeout: cdk.Duration.seconds(5),
       }
     )

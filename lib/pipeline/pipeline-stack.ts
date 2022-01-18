@@ -22,7 +22,7 @@ export class PipelineStack extends cdk.Stack {
         crossAccountKeys: true,
         synth: new cdk_pipeline.ShellStep('Synth', {
           input: cdk_pipeline.CodePipelineSource.gitHub(
-            'siecola/CognitoICC',
+            'HMVilela/CognitoICC',
             props.branch
           ),
           commands: ['npm ci', 'npm run build', 'npx cdk synth'],
