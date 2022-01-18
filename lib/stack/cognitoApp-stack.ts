@@ -16,8 +16,6 @@ export class CognitoAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: CognitoAppStackProps) {
     super(scope, id, props)
 
-    const logGroup = new cwlogs.LogGroup(this, 'CognitoApiLogs')
-
     const postConfirmationHandler = new lambdaNodeJS.NodejsFunction(
       this,
       'PostConfirmationFunction',
@@ -25,7 +23,10 @@ export class CognitoAppStack extends cdk.Stack {
         functionName: 'PostConfirmationFunction',
         entry: 'lambda/postConfirmationFunction.js',
         handler: 'handler',
-        bundling: { minify: false, sourceMap: false },
+        bundling: {
+          minify: false,
+          sourceMap: false,
+        },
         tracing: lambda.Tracing.ACTIVE,
         memorySize: 129,
         timeout: cdk.Duration.seconds(5),
@@ -39,14 +40,17 @@ export class CognitoAppStack extends cdk.Stack {
         functionName: 'PreAuthenticationFunction',
         entry: 'lambda/preAuthenticationFunction.js',
         handler: 'handler',
-        bundling: { minify: false, sourceMap: false },
+        bundling: {
+          minify: false,
+          sourceMap: false,
+        },
         tracing: lambda.Tracing.ACTIVE,
         memorySize: 129,
         timeout: cdk.Duration.seconds(5),
       }
     )
 
-    // Cognito customer user pool
+    //Cognito customer user pool
     const customerPool = new cognito.UserPool(this, 'CustomerPool', {
       userPoolName: 'CustomerPool',
       lambdaTriggers: {
@@ -63,14 +67,17 @@ export class CognitoAppStack extends cdk.Stack {
         emailStyle: cognito.VerificationEmailStyle.CODE,
         emailSubject: 'Verify your email to use Cognito Test Service!',
         emailBody:
-          'Thanks for signing up to Cognito Test Service! This is your verification code: {####}',
+          'Thanks for signing up to Cognito Test service! This is your verification code {####}',
       },
       signInAliases: {
         username: false,
         email: true,
       },
       standardAttributes: {
-        fullname: { required: true, mutable: false },
+        fullname: {
+          required: true,
+          mutable: false,
+        },
       },
       passwordPolicy: {
         minLength: 8,
@@ -88,7 +95,7 @@ export class CognitoAppStack extends cdk.Stack {
       },
     })
 
-    // Cognito admin user pool
+    //Cognito admin user pool
     const adminPool = new cognito.UserPool(this, 'AdminPool', {
       userPoolName: 'AdminPool',
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -101,14 +108,17 @@ export class CognitoAppStack extends cdk.Stack {
         emailStyle: cognito.VerificationEmailStyle.CODE,
         emailSubject: 'Verify your email to use Cognito Test Service!',
         emailBody:
-          'Thanks for signing up to Cognito Test Service! This is your verification code: {####}',
+          'Thanks for signing up to Cognito Test service! This is your verification code {####}',
       },
       signInAliases: {
         username: false,
         email: true,
       },
       standardAttributes: {
-        fullname: { required: true, mutable: false },
+        fullname: {
+          required: true,
+          mutable: false,
+        },
       },
       passwordPolicy: {
         minLength: 8,
@@ -120,7 +130,7 @@ export class CognitoAppStack extends cdk.Stack {
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
     })
-    customerPool.addDomain('AdminDomain', {
+    adminPool.addDomain('AdminDomain', {
       cognitoDomain: {
         domainPrefix: props.branch.concat('-hmv-admin-service'),
       },
@@ -147,6 +157,7 @@ export class CognitoAppStack extends cdk.Stack {
         scopes: [customerWebScope, customerMobileScope],
       }
     )
+
     const adminResourceServer = adminPool.addResourceServer(
       'AdminResourceServer',
       {
@@ -222,6 +233,7 @@ export class CognitoAppStack extends cdk.Stack {
       }
     )
 
+    const logGroup = new cwlogs.LogGroup(this, 'CognitoApiLogs')
     const api = new apigateway.RestApi(this, 'CognitoApi', {
       restApiName: 'Cognito API',
       deployOptions: {
@@ -261,15 +273,16 @@ export class CognitoAppStack extends cdk.Stack {
     const productsFetchFunctionIntegration = new apigateway.LambdaIntegration(
       props.productsFetchHandler
     )
-    // List all products - Web and mobile clients
     const productsResource = api.root.addResource('products')
+
+    //List all products - Web and mobile clients
     productsResource.addMethod(
       'GET',
       productsFetchFunctionIntegration,
       productsFetchWebMobileIntegrationOption
     )
 
-    // Get product by id - Web client
+    //Get product by id - Web client
     const productIdResource = productsResource.addResource('{id}')
     productIdResource.addMethod(
       'GET',
@@ -280,8 +293,7 @@ export class CognitoAppStack extends cdk.Stack {
     const productsAdminFunctionIntegration = new apigateway.LambdaIntegration(
       props.productsAdminHandler
     )
-
-    // POST /products
+    //POST /products
     productsResource.addMethod(
       'POST',
       productsAdminFunctionIntegration,

@@ -22,7 +22,7 @@ export class PipelineStack extends cdk.Stack {
         crossAccountKeys: true,
         synth: new cdk_pipeline.ShellStep('Synth', {
           input: cdk_pipeline.CodePipelineSource.gitHub(
-            'HMVilela/CognitoICC',
+            'siecola/CognitoICC',
             props.branch
           ),
           commands: ['npm ci', 'npm run build', 'npx cdk synth'],
@@ -30,7 +30,7 @@ export class PipelineStack extends cdk.Stack {
       }
     )
 
-    // Add the stage here
+    //Add the stage here!
     const cognitoStage = new CognitoStage(this, props.branch.concat('Stage'), {
       branch: props.branch,
       env: {
