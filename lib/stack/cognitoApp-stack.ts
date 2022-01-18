@@ -9,6 +9,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 interface CognitoAppStackProps extends cdk.StackProps {
   branch: string
   productsFetchHandler: lambdaNodeJS.NodejsFunction
+  productsAdminHandler: lambdaNodeJS.NodejsFunction
 }
 
 export class CognitoAppStack extends cdk.Stack {
@@ -87,6 +88,44 @@ export class CognitoAppStack extends cdk.Stack {
       },
     })
 
+    // Cognito admin user pool
+    const adminPool = new cognito.UserPool(this, 'AdminPool', {
+      userPoolName: 'AdminPool',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      selfSignUpEnabled: true,
+      autoVerify: {
+        email: true,
+        phone: false,
+      },
+      userVerification: {
+        emailStyle: cognito.VerificationEmailStyle.CODE,
+        emailSubject: 'Verify your email to use Cognito Test Service!',
+        emailBody:
+          'Thanks for signing up to Cognito Test Service! This is your verification code: {####}',
+      },
+      signInAliases: {
+        username: false,
+        email: true,
+      },
+      standardAttributes: {
+        fullname: { required: true, mutable: false },
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: true,
+        tempPasswordValidity: cdk.Duration.days(3),
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+    })
+    customerPool.addDomain('AdminDomain', {
+      cognitoDomain: {
+        domainPrefix: props.branch.concat('-hmv-admin-service'),
+      },
+    })
+
     const customerWebScope = new cognito.ResourceServerScope({
       scopeName: 'web',
       scopeDescription: 'Customer web operations',
@@ -95,6 +134,11 @@ export class CognitoAppStack extends cdk.Stack {
       scopeName: 'mobile',
       scopeDescription: 'Customer mobile operations',
     })
+    const adminWebScope = new cognito.ResourceServerScope({
+      scopeName: 'web',
+      scopeDescription: 'Admin web operations',
+    })
+
     const customerResourceServer = customerPool.addResourceServer(
       'CustomerResourceServer',
       {
@@ -103,6 +147,15 @@ export class CognitoAppStack extends cdk.Stack {
         scopes: [customerWebScope, customerMobileScope],
       }
     )
+    const adminResourceServer = adminPool.addResourceServer(
+      'AdminResourceServer',
+      {
+        identifier: 'admin',
+        userPoolResourceServerName: 'AdminResourceServer',
+        scopes: [adminWebScope],
+      }
+    )
+
     customerPool.addClient('customer-web-client', {
       userPoolClientName: 'customerWebClient',
       authFlows: {
@@ -137,12 +190,35 @@ export class CognitoAppStack extends cdk.Stack {
       },
     })
 
+    adminPool.addClient('admin-web-client', {
+      userPoolClientName: 'adminWebClient',
+      authFlows: {
+        userPassword: true,
+      },
+      accessTokenValidity: cdk.Duration.minutes(60),
+      refreshTokenValidity: cdk.Duration.days(7),
+      oAuth: {
+        scopes: [
+          cognito.OAuthScope.resourceServer(adminResourceServer, adminWebScope),
+        ],
+      },
+    })
+
     const productsAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(
       this,
       'ProductsAuthorizer',
       {
-        cognitoUserPools: [customerPool],
+        cognitoUserPools: [customerPool, adminPool],
         authorizerName: 'ProductsAuthorizer',
+      }
+    )
+
+    const productsAdminAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(
+      this,
+      'ProductsAdminAuthorizer',
+      {
+        cognitoUserPools: [adminPool],
+        authorizerName: 'ProductsAdminAuthorizer',
       }
     )
 
@@ -167,12 +243,19 @@ export class CognitoAppStack extends cdk.Stack {
     const productsFetchWebMobileIntegrationOption = {
       authorizer: productsAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
-      authorizationScopes: ['customer/web', 'customer/mobile'],
+      authorizationScopes: ['customer/web', 'customer/mobile', 'admin/web'],
     }
+
     const productsFetchWebIntegrationOption = {
       authorizer: productsAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
-      authorizationScopes: ['customer/web'],
+      authorizationScopes: ['customer/web', 'admin/web'],
+    }
+
+    const productsAdminWebIntegrationOption = {
+      authorizer: productsAdminAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+      authorizationScopes: ['admin/web'],
     }
 
     const productsFetchFunctionIntegration = new apigateway.LambdaIntegration(
@@ -192,6 +275,17 @@ export class CognitoAppStack extends cdk.Stack {
       'GET',
       productsFetchFunctionIntegration,
       productsFetchWebIntegrationOption
+    )
+
+    const productsAdminFunctionIntegration = new apigateway.LambdaIntegration(
+      props.productsAdminHandler
+    )
+
+    // POST /products
+    productsResource.addMethod(
+      'POST',
+      productsAdminFunctionIntegration,
+      productsAdminWebIntegrationOption
     )
   }
 }
