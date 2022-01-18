@@ -21,5 +21,6 @@ export class CognitoStage extends cdk.Stage {
       productsAdminHandler: productsAdmintack.productsAdminHandler,
     })
     cognitoAppStack.addDependency(productsFetchStack)
+    cognitoAppStack.addDependency(productsAdmintack)
   }
 }
