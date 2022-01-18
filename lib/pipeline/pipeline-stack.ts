@@ -20,6 +20,11 @@ export class PipelineStack extends cdk.Stack {
         pipelineName: 'CognitoPipeline'.concat(props.branch),
         dockerEnabledForSynth: true,
         crossAccountKeys: true,
+        // codeBuildDefaults: {
+        //   buildEnvironment: {
+        //     computeType: cdk.aws_codebuild.ComputeType.LARGE,
+        //   },
+        // },
         synth: new cdk_pipeline.ShellStep('Synth', {
           input: cdk_pipeline.CodePipelineSource.gitHub(
             'HMVilela/CognitoICC',

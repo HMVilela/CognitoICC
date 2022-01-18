@@ -28,7 +28,7 @@ export class CognitoAppStack extends cdk.Stack {
           sourceMap: false,
         },
         tracing: lambda.Tracing.ACTIVE,
-        memorySize: 129,
+        memorySize: 128,
         timeout: cdk.Duration.seconds(5),
       }
     )
@@ -45,7 +45,7 @@ export class CognitoAppStack extends cdk.Stack {
           sourceMap: false,
         },
         tracing: lambda.Tracing.ACTIVE,
-        memorySize: 129,
+        memorySize: 128,
         timeout: cdk.Duration.seconds(5),
       }
     )
@@ -180,6 +180,7 @@ export class CognitoAppStack extends cdk.Stack {
             customerResourceServer,
             customerWebScope
           ),
+          cognito.OAuthScope.COGNITO_ADMIN,
         ],
       },
     })
@@ -197,6 +198,7 @@ export class CognitoAppStack extends cdk.Stack {
             customerResourceServer,
             customerMobileScope
           ),
+          cognito.OAuthScope.COGNITO_ADMIN,
         ],
       },
     })
@@ -211,6 +213,7 @@ export class CognitoAppStack extends cdk.Stack {
       oAuth: {
         scopes: [
           cognito.OAuthScope.resourceServer(adminResourceServer, adminWebScope),
+          cognito.OAuthScope.COGNITO_ADMIN,
         ],
       },
     })
