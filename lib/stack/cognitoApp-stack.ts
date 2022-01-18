@@ -33,10 +33,10 @@ export class CognitoAppStack extends cdk.Stack {
 
     const preAuthenticationHandler = new lambdaNodeJS.NodejsFunction(
       this,
-      'PreAuthenticationFunctoin',
+      'PreAuthenticationFunction',
       {
-        functionName: 'PreAuthenticationFunctoin',
-        entry: 'lambda/preAuthenticationFunctoin.js',
+        functionName: 'PreAuthenticationFunction',
+        entry: 'lambda/preAuthenticationFunction.js',
         handler: 'handler',
         bundling: { minify: false, sourceMap: false },
         tracing: lambda.Tracing.ACTIVE,
