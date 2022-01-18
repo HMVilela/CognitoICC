@@ -14,10 +14,21 @@ exports.handler = async function (event, context) {
   )
 
   if (method === 'GET') {
-    return {
-      statusCode: 200,
-      headers: {},
-      body: JSON.stringify('GET /products'),
+    if (event.resource === '/products') {
+      // Web and mobile clients
+      return {
+        statusCode: 200,
+        headers: {},
+        body: JSON.stringify('GET /products'),
+      }
+    } else if (event.resource === '/products/{id}') {
+      // Web client
+      const productId = event.pathParameters.id
+      return {
+        statusCode: 200,
+        headers: {},
+        body: JSON.stringify(`GET /products/${productId}`),
+      }
     }
   }
 
